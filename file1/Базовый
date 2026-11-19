@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер температур</title>
+    <link rel="stylesheet" href="./styles/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Конвертер температур</h1>
+
+        <label for="temperature">Введите температуру:</label>
+        <input type="number" id="temperature" placeholder="Например, 25">
+
+        <label for="conversion">Выберите преобразование:</label>
+        <select id="conversion">
+            <option value="cToF">Цельсий → Фаренгейт</option>
+            <option value="fToC">Фаренгейт → Цельсий</option>
+            <option value="cToK">Цельсий → Кельвин</option>
+        </select>
+
+        <button id="convert">Конвертировать</button>
+
+        <p id="result">Результат появится здесь</p>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
+--------------------------------
+// Цельсий в Фаренгейт
+export function celsiusToFahrenheit(celsius) {
+    return (celsius * 9 / 5) + 32;
+}
+
+// Фаренгейт в Цельсий
+export function fahrenheitToCelsius(fahrenheit) {
+    return (fahrenheit - 32) * 5 / 9;
+}
+
+// Цельсий в Кельвин
+export function celsiusToKelvin(celsius) {
+    return celsius + 273.15;
+}
+------------------------------------
+import {
+    celsiusToFahrenheit,
+    fahrenheitToCelsius,
+    celsiusToKelvin
+} from "./modules/temperature.js";
+
+const input = document.querySelector("#temperature");
+const conversion = document.querySelector("#conversion");
+const button = document.querySelector("#convert");
+const result = document.querySelector("#result");
+
+button.addEventListener("click", () => {
+    const value = Number(input.value);
+
+    if (input.value.trim() === "" || !Number.isFinite(value)) {
+        result.textContent = "Введите корректную температуру!";
+        return;
+    }
+
+    let answer;
+
+    switch (conversion.value) {
+        case "cToF":
+            answer = celsiusToFahrenheit(value);
+            result.textContent = `${answer.toFixed(2)} °F`;
+            break;
+
+        case "fToC":
+            answer = fahrenheitToCelsius(value);
+            result.textContent = `${answer.toFixed(2)} °C`;
+            break;
+
+        case "cToK":
+            answer = celsiusToKelvin(value);
+
+            if (answer < 0) {
+                result.textContent = "Температура не может быть ниже абсолютного нуля!";
+                return;
+            }
+
+            result.textContent = `${answer.toFixed(2)} K`;
+            break;
+    }
+});
+-------------------------------------------
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 7px;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+#result {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #2563eb;
+}
