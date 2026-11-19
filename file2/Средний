@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список задач</title>
+    <link rel="stylesheet" href="./styles/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Мой список задач</h1>
+
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="Введите новую задачу">
+            <button id="addButton">Добавить</button>
+        </div>
+
+        <ul id="taskList"></ul>
+
+        <p id="counter">Всего задач: 0</p>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
+-----------------------------------
+let tasks = [];
+
+export function getTasks() {
+    return tasks;
+}
+
+export function addTask(text) {
+    const task = {
+        id: Date.now(),
+        text: text,
+        completed: false
+    };
+
+    tasks.push(task);
+}
+
+export function deleteTask(id) {
+    tasks = tasks.filter(task => task.id !== id);
+}
+
+export function toggleTask(id) {
+    const task = tasks.find(task => task.id === id);
+
+    if (task) {
+        task.completed = !task.completed;
+    }
+}
+-------------------------------------
+let tasks = [];
+
+export function getTasks() {
+    return tasks;
+}
+
+export function addTask(text) {
+    const task = {
+        id: Date.now(),
+        text: text,
+        completed: false
+    };
+
+    tasks.push(task);
+}
+
+export function deleteTask(id) {
+    tasks = tasks.filter(task => task.id !== id);
+}
+
+export function toggleTask(id) {
+    const task = tasks.find(task => task.id === id);
+
+    if (task) {
+        task.completed = !task.completed;
+    }
+}
+------------------------------------------
+import { addTask, deleteTask } from "./taskModel.js";
+import { renderTasks } from "./taskRenderer.js";
+
+export function handleAdd() {
+    const input = document.querySelector("#taskInput");
+    const text = input.value.trim();
+
+    if (text === "") {
+        alert("Введите название задачи!");
+        return;
+    }
+
+    addTask(text);
+
+    input.value = "";
+    renderTasks();
+}
+
+export function handleDelete(id) {
+    deleteTask(id);
+    renderTasks();
+}
+-------------------------------------------
+import { handleAdd } from "./modules/taskHandlers.js";
+import { renderTasks } from "./modules/taskRenderer.js";
+
+const addButton = document.querySelector("#addButton");
+const taskInput = document.querySelector("#taskInput");
+
+addButton.addEventListener("click", handleAdd);
+
+taskInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        handleAdd();
+    }
+});
+
+renderTasks();
+-----------------------------------
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    display: flex;
+    justify-content: center;
+    padding-top: 70px;
+}
+
+.container {
+    background: white;
+    width: 400px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+}
+
+.input-group {
+    display: flex;
+    gap: 8px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    background: #2563eb;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+ul {
+    padding: 0;
+    list-style: none;
+}
+
+li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    background: #f1f5f9;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+
+li span {
+    flex: 1;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.completed {
+    text-decoration: line-through;
+    color: gray;
+}
+
+.delete-button {
+    background: #dc2626;
+}
+
+#counter {
+    text-align: center;
+    color: #555;
+    margin-top: 20px;
+}
