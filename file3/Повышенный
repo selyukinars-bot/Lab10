@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мини-CRM клиентов</title>
+    <link rel="stylesheet" href="./styles/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Мини-CRM клиентов</h1>
+
+        <form id="clientForm">
+            <input type="hidden" id="clientId">
+
+            <input type="text" id="name" placeholder="Имя клиента">
+            <input type="tel" id="phone" placeholder="Номер телефона">
+            <input type="email" id="email" placeholder="Электронная почта">
+
+            <button type="submit" id="submitButton">
+                Добавить клиента
+            </button>
+
+            <p id="message"></p>
+        </form>
+
+        <h2>Список клиентов</h2>
+
+        <input
+            type="search"
+            id="searchInput"
+            placeholder="Поиск клиента..."
+        >
+
+        <div id="clientList"></div>
+
+        <p id="counter">Всего клиентов: 0</p>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
+-----------------------------------------------
+let clients = [];
+
+export function setClients(data) {
+    clients = data;
+}
+
+export function getClients() {
+    return clients;
+}
+
+// Добавление клиента
+export function addClient(client) {
+    const newClient = {
+        id: crypto.randomUUID(),
+        ...client
+    };
+
+    clients.push(newClient);
+    return newClient;
+}
+
+// Редактирование клиента
+export function updateClient(id, updatedData) {
+    clients = clients.map(client =>
+        client.id === id
+            ? { ...client, ...updatedData }
+            : client
+    );
+}
+
+// Удаление клиента
+export function deleteClient(id) {
+    clients = clients.filter(client => client.id !== id);
+}
+
+// Получение одного клиента
+export function getClientById(id) {
+    return clients.find(client => client.id === id);
+}
+-----------------------------------------------
+export function validateClient(name, phone, email) {
+    const errors = [];
+
+    if (name.trim().length < 2) {
+        errors.push("Имя должно содержать минимум 2 символа");
+    }
+
+    if (!/^\+?[0-9\s()-]{7,20}$/.test(phone.trim())) {
+        errors.push("Введите корректный номер телефона");
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        errors.push("Введите корректную электронную почту");
+    }
+
+    return errors;
+}
+--------------------------------------------------------
+export function searchClients(clients, query) {
+    const searchText = query.toLowerCase().trim();
+
+    if (!searchText) {
+        return clients;
+    }
+
+    return clients.filter(client =>
+        client.name.toLowerCase().includes(searchText) ||
+        client.phone.toLowerCase().includes(searchText) ||
+        client.email.toLowerCase().includes(searchText)
+    );
+}
+--------------------------------------------------------------
+const STORAGE_KEY = "crm_clients";
+
+// Сохранение клиентов
+export function saveClients(clients) {
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(clients)
+    );
+}
+
+// Загрузка клиентов
+export function loadClients() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        const clients = data ? JSON.parse(data) : [];
+
+        return Array.isArray(clients) ? clients : [];
+    } catch (error) {
+        console.error("Ошибка загрузки данных:", error);
+        return [];
+    }
+}
+---------------------------------------------------------------------
+export function renderClients(clients) {
+    const clientList = document.querySelector("#clientList");
+    const counter = document.querySelector("#counter");
+
+    clientList.innerHTML = "";
+
+    if (clients.length === 0) {
+        clientList.textContent = "Клиенты не найдены";
+    }
+
+    clients.forEach(client => {
+        const card = document.createElement("div");
+        card.className = "client-card";
+
+        const name = document.createElement("h3");
+        name.textContent = client.name;
+
+        const phone = document.createElement("p");
+        phone.textContent = "Телефон: " + client.phone;
+
+        const email = document.createElement("p");
+        email.textContent = "Email: " + client.email;
+
+        const editButton = document.createElement("button");
+        editButton.textContent = "Изменить";
+        editButton.dataset.action = "edit";
+        editButton.dataset.id = client.id;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Удалить";
+        deleteButton.className = "delete-button";
+        deleteButton.dataset.action = "delete";
+        deleteButton.dataset.id = client.id;
+
+        card.append(name, phone, email, editButton, deleteButton);
+        clientList.appendChild(card);
+    });
+
+    counter.textContent = `Всего клиентов: ${clients.length}`;
+}
+--------------------------------------------------------
+import {
+    setClients,
+    getClients,
+    addClient,
+    updateClient,
+    deleteClient,
+    getClientById
+} from "./modules/clientModel.js";
+
+import { validateClient } from "./modules/validation.js";
+import { searchClients } from "./modules/search.js";
+import { saveClients, loadClients } from "./modules/storage.js";
+import { renderClients } from "./modules/clientRenderer.js";
+
+const form = document.querySelector("#clientForm");
+const nameInput = document.querySelector("#name");
+const phoneInput = document.querySelector("#phone");
+const emailInput = document.querySelector("#email");
+const clientIdInput = document.querySelector("#clientId");
+const searchInput = document.querySelector("#searchInput");
+const message = document.querySelector("#message");
+const submitButton = document.querySelector("#submitButton");
+
+// Загрузка сохранённых клиентов
+setClients(loadClients());
+
+// Обновление интерфейса
+function refresh() {
+    const clients = getClients();
+    const query = searchInput.value;
+
+    const filteredClients = searchClients(clients, query);
+
+    renderClients(filteredClients);
+    saveClients(clients);
+}
+
+// Добавление и редактирование
+form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const name = nameInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const email = emailInput.value.trim();
+
+    const errors = validateClient(name, phone, email);
+
+    if (errors.length > 0) {
+        message.textContent = errors.join(". ");
+        return;
+    }
+
+    const clientData = { name, phone, email };
+    const id = clientIdInput.value;
+
+    if (id) {
+        updateClient(id, clientData);
+        message.textContent = "Данные клиента обновлены!";
+    } else {
+        addClient(clientData);
+        message.textContent = "Клиент успешно добавлен!";
+    }
+
+    form.reset();
+    clientIdInput.value = "";
+    submitButton.textContent = "Добавить клиента";
+
+    refresh();
+});
+
+// Поиск клиентов
+searchInput.addEventListener("input", refresh);
+
+// Обработка кнопок изменения и удаления
+document.querySelector("#clientList").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action]");
+
+    if (!button) return;
+
+    const id = button.dataset.id;
+
+    if (button.dataset.action === "delete") {
+        deleteClient(id);
+        message.textContent = "Клиент удалён!";
+        refresh();
+    }
+
+    if (button.dataset.action === "edit") {
+        const client = getClientById(id);
+
+        if (!client) return;
+
+        clientIdInput.value = client.id;
+        nameInput.value = client.name;
+        phoneInput.value = client.phone;
+        emailInput.value = client.email;
+
+        submitButton.textContent = "Сохранить изменения";
+        message.textContent = "Редактирование клиента";
+    }
+});
+
+// Первоначальное отображение
+refresh();
+--------------------------------------------------------
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    margin: 0;
+    padding: 40px 15px;
+}
+
+.container {
+    max-width: 550px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1, h2 {
+    text-align: center;
+    color: #1e293b;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 7px 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px 3px 5px 0;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+#submitButton {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.client-card {
+    background: #f1f5f9;
+    padding: 15px;
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.client-card h3 {
+    margin-top: 0;
+}
+
+.delete-button {
+    background: #dc2626;
+}
+
+.delete-button:hover {
+    background: #b91c1c;
+}
+
+#message {
+    color: #2563eb;
+    font-weight: bold;
+}
+
+#counter {
+    text-align: center;
+    color: #64748b;
+}
